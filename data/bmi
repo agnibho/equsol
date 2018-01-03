@@ -1,0 +1,2 @@
+[B.M.I.] = [Weight (kg)] / [Height (m)]^2
+[Target Weight (kg)] = 23 * [Height (m)]^2

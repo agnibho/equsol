@@ -1,0 +1,3 @@
+# Mosteller formula
+
+[Body surface area (m²)] = sqrt( [Weight (kg)] * [Height (m)] / 36 )

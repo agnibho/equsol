@@ -1,0 +1,79 @@
+#! /bin/bash
+
+# Copyright (c) 2017 Agnibho Mondal
+# All rights reserved
+#
+# This file is part of Equsol.
+#
+# Equsol is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# Equsol is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# Equsol.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Agnibho Mondal
+# contact@agnibho.com
+# www.agnibho.com
+
+DIR="/home/agnibho/program/equsol/data/";
+
+function calc {
+	echo -e "\n$1\n";
+	IFS="=" read LHS RHS <<< "$1";
+	readarray -t VARS <<< "$(grep -oP "\[.*?\]" <<< "$RHS")";
+	EQ=$RHS;
+	for v in "${VARS[@]}"
+	do
+		read -p "$(echo "$v" | sed -E "s/\[|\]//g") = " val;
+		if ! [[ $val =~ ^-?[0-9]+([.][0-9]+)?$ ]];then
+			echo "Invalid input."
+			exit 1;
+		fi
+		var=$(echo "$v" | sed -e 's/[]\/$*.^|[]/\\&/g');
+		EQ="$(echo "$EQ" | sed "s/$var/$val/g")";
+	done
+	RES=$(echo "$EQ"|bc -l|sed "s/0*$//g"|sed "s/\.$//g"|sed "s/^\./0./g");
+	echo -e "\n$(echo "$LHS" | sed -E "s/\[|\]|^ | $//g") = \033[1m$RES\033[0m";
+}
+
+if [ -f "$DIR$1" ];then
+	EQS=();
+	while read line;do
+		if grep -q "^#" <<<"$line";then
+			continue;
+		elif grep -q "=" <<< "$line";then
+			EQS+=("$line");
+		fi
+	done < "$DIR$1"
+	if [ ${#EQS[@]} -gt 1 ];then
+		for i in "${!EQS[@]}"
+		do
+			echo "($i) ${EQS[$i]}";
+		done
+		read -p "Enter equation number: " i;
+		if ! [[ $i =~ ^[0-9]+$ ]];then
+			echo "Invalid input.";
+			exit 1;
+		fi
+		if [ -n "${EQS[$i]}" ];then
+			calc "${EQS[$i]}";
+		else
+			echo "Invalid equation number.";
+			exit 1;
+		fi
+	elif [ ${#EQS[@]} -eq 1 ];then
+		calc "${EQS[0]}";
+	else
+		echo "No equation found";
+		exit 1;
+	fi
+else
+	echo "Available equations: ";
+	ls "$DIR";
+fi
